@@ -13,7 +13,7 @@ sed -i 's/^#\s*\(deb.*universe\)$/\1/g' /etc/apt/sources.list
 
 apt-get update
 
-BUILD_PACKAGES=(devscripts equivs build-essential fakeroot debhelper git gcc libc6-dev make cmake libevent-dev libbrotli-dev libssl-dev libkrb5-dev)
+BUILD_PACKAGES=(devscripts equivs build-essential fakeroot debhelper git gcc libc6-dev make cmake libevent-dev libbrotli-dev libssl-dev libkrb5-dev pgxnclient)
 if [ "$DEMO" = "true" ]; then
     export DEB_PG_SUPPORTED_VERSIONS="$PGVERSION"
     WITH_PERL=false
@@ -70,7 +70,6 @@ apt-get install -y \
     python3-psycopg2
 
 git clone https://github.com/michelp/pgjwt.git /pgjwt
-git clone --branch v0.4.1 https://github.com/pgvector/pgvector.git /pgvector
 
 # forbid creation of a main cluster when package is installed
 sed -ri 's/#(create_main_cluster) .*$/\1 = false/' /etc/postgresql-common/createcluster.conf
@@ -185,14 +184,8 @@ for version in $DEB_PG_SUPPORTED_VERSIONS; do
     done
 
     cp /pgjwt/*.sql /pgjwt/*.control /usr/share/postgresql/${version}/extension/
-    if [ "${version%.*}" -ge 10 ]; then
-        CUR_PATH=$(pwd)
-        cd /pgvector
-        sed -i "s|pg_config|/usr/lib/postgresql/${version}/bin/pg_config|g" Makefile        
-        make && make install
-        git reset --hard
-        git clean -f -d
-        cd $CUR_PATH
+    if [ "${version%.*}" -ge 11 ]; then
+        PATH="${PATH}:/usr/lib/postgresql/${version}/bin" pgxn install vector
     fi
 done
 
