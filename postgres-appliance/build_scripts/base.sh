@@ -69,6 +69,9 @@ apt-get install -y \
     python3.10 \
     python3-psycopg2
 
+git clone https://github.com/michelp/pgjwt.git /pgjwt
+git clone --branch v0.4.1 https://github.com/pgvector/pgvector.git /pgvector
+
 # forbid creation of a main cluster when package is installed
 sed -ri 's/#(create_main_cluster) .*$/\1 = false/' /etc/postgresql-common/createcluster.conf
 
@@ -180,6 +183,17 @@ for version in $DEB_PG_SUPPORTED_VERSIONS; do
             "${EXTRA_EXTENSIONS[@]}"; do
         make -C "$n" USE_PGXS=1 clean install-strip
     done
+
+    cp /pgjwt/*.sql /pgjwt/*.control /usr/share/postgresql/${version}/extension/
+    if [ "${version%.*}" -ge 10 ]; then
+        CUR_PATH=$(pwd)
+        cd /pgvector
+        sed -i "s|pg_config|/usr/lib/postgresql/${version}/bin/pg_config|g" Makefile        
+        make && make install
+        git reset --hard
+        git clean -f -d
+        cd $CUR_PATH
+    fi
 done
 
 apt-get install -y skytools3-ticker pgbouncer
@@ -194,7 +208,7 @@ done
 if [ "$DEMO" != "true" ]; then
     for version in $DEB_PG_SUPPORTED_VERSIONS; do
         # create postgis symlinks to make it possible to perform update
-        ln -s "postgis-${POSTGIS_VERSION%.*}.so" "/usr/lib/postgresql/${version}/lib/postgis-2.5.so"
+        ln -s "postgis-${POSTGIS_VERSION%.*}.so" "/usr/lib/postgresql/${version}/lib/postgis-2.5.so" || true
     done
 fi
 
@@ -320,5 +334,7 @@ rm -rf /var/lib/apt/lists/* \
         /usr/lib/postgresql/*/bin/droplang \
         /usr/lib/postgresql/*/bin/dropuser \
         /usr/lib/postgresql/*/bin/pg_standby \
-        /usr/lib/postgresql/*/bin/pltcl_*
+        /usr/lib/postgresql/*/bin/pltcl_* \
+        /pgjwt \
+        /pgvector
 find /var/log -type f -exec truncate --size 0 {} \;
