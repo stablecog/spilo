@@ -71,9 +71,18 @@ apt-get install -y \
 
 git clone https://github.com/michelp/pgjwt.git /pgjwt
 git clone https://github.com/supabase/pg_net.git /pg_net
+git clone https://github.com/supabase/pg_graphql.git /pg_graphql
+(
+    cd /pg_graphql
+    git checkout v1.3.0
+)
 
 # forbid creation of a main cluster when package is installed
 sed -ri 's/#(create_main_cluster) .*$/\1 = false/' /etc/postgresql-common/createcluster.conf
+
+# Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+cargo install --locked cargo-pgrx@0.9.8
 
 for version in $DEB_PG_SUPPORTED_VERSIONS; do
     sed -i "s/ main.*$/ main $version/g" /etc/apt/sources.list.d/pgdg.list
@@ -187,6 +196,24 @@ for version in $DEB_PG_SUPPORTED_VERSIONS; do
     cp /pgjwt/*.sql /pgjwt/*.control /usr/share/postgresql/${version}/extension/
     if [ "${version%.*}" -ge 11 ]; then
         PATH="${PATH}:/usr/lib/postgresql/${version}/bin" pgxn install vector
+    fi
+
+
+    if [ "${version%.*}" -eq 14 ]; then
+        cargo pgrx init --pg14 /usr/lib/postgresql/$version/bin/pg_config
+    fi
+
+    if [ "${version%.*}" -eq 15 ]; then
+        cargo pgrx init --pg15 /usr/lib/postgresql/$version/bin/pg_config
+    fi
+
+
+    if [ "${version%.*}" -ge 14 ]; then
+        PATH="${PATH}:/usr/lib/postgresql/${version}/bin" pgxn install pgsodium
+        (
+            cd /pg_graphql
+            cargo pgrx install --pg-config /usr/lib/postgresql/$version/bin/pg_config
+        )
     fi
 
     # pg_net install
