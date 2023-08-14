@@ -339,5 +339,6 @@ rm -rf /var/lib/apt/lists/* \
         /usr/lib/postgresql/*/bin/pg_standby \
         /usr/lib/postgresql/*/bin/pltcl_* \
         /pgjwt \
-        /pgvector
+        /pgvector \
+        /pg_net
 find /var/log -type f -exec truncate --size 0 {} \;
