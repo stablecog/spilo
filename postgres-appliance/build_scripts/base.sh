@@ -13,7 +13,7 @@ sed -i 's/^#\s*\(deb.*universe\)$/\1/g' /etc/apt/sources.list
 
 apt-get update
 
-BUILD_PACKAGES=(devscripts equivs build-essential fakeroot debhelper git gcc libc6-dev make cmake libevent-dev libbrotli-dev libssl-dev libkrb5-dev pgxnclient)
+BUILD_PACKAGES=(devscripts equivs build-essential fakeroot debhelper git gcc libc6-dev make cmake libevent-dev libbrotli-dev libssl-dev libkrb5-dev pgxnclient libsodium-dev)
 if [ "$DEMO" = "true" ]; then
     export DEB_PG_SUPPORTED_VERSIONS="$PGVERSION"
     WITH_PERL=false
@@ -82,6 +82,7 @@ sed -ri 's/#(create_main_cluster) .*$/\1 = false/' /etc/postgresql-common/create
 
 # Rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+source "$HOME/.cargo/env"
 cargo install --locked cargo-pgrx@0.9.8
 
 for version in $DEB_PG_SUPPORTED_VERSIONS; do
