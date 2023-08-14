@@ -195,6 +195,7 @@ for version in $DEB_PG_SUPPORTED_VERSIONS; do
             cd /pg_net
             make PG_CONFIG="/usr/lib/postgresql/$version/bin/pg_config"
             make PG_CONFIG="/usr/lib/postgresql/$version/bin/pg_config" install
+            make PG_CONFIG="/usr/lib/postgresql/$version/bin/pg_config" clean
         )
     fi
 done
