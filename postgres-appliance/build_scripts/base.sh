@@ -70,6 +70,7 @@ apt-get install -y \
     python3-psycopg2
 
 git clone https://github.com/michelp/pgjwt.git /pgjwt
+git clone https://github.com/supabase/pg_net.git /pg_net
 
 # forbid creation of a main cluster when package is installed
 sed -ri 's/#(create_main_cluster) .*$/\1 = false/' /etc/postgresql-common/createcluster.conf
@@ -186,6 +187,15 @@ for version in $DEB_PG_SUPPORTED_VERSIONS; do
     cp /pgjwt/*.sql /pgjwt/*.control /usr/share/postgresql/${version}/extension/
     if [ "${version%.*}" -ge 11 ]; then
         PATH="${PATH}:/usr/lib/postgresql/${version}/bin" pgxn install vector
+    fi
+
+    # pg_net install
+    if [ "${version%.*}" -ge 12 ]; then
+        (
+            cd /pg_net
+            make PG_CONFIG="/usr/lib/postgresql/$version/bin/pg_config"
+            make PG_CONFIG="/usr/lib/postgresql/$version/bin/pg_config" install
+        )
     fi
 done
 
